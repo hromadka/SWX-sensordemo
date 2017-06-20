@@ -1,5 +1,6 @@
 package org.sofwerx.swx_sensordemo;
 
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -23,13 +24,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     GraphView gv;
 
     // Sensors and Manager variables
-    private  SensorManager sensorManager;
+    private SensorManager sensorManager;
     private Sensor accelerometerSensor;
-    private Sensor gyroscopeSensor;
+    //private Sensor gyroscopeSensor;
     private Sensor magneticSensor;
-
-    //private SensorManager mSensorManager;
-    //private Sensor mSensor;
+    private Sensor audioSensor;
     //private TriggerEventListener mTriggerEventListener;
 
     private float[] gravity = new float[3];
@@ -41,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean sensorsEnabled = false;
     private boolean sensorsListening = false;
 
+    private boolean logging = false;
+
     private static final float RAD_TO_DEGREES = (float) (180.0f / Math.PI);
 
 
@@ -50,73 +51,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        readoutX = (TextView)findViewById(R.id.readoutTxtX);
-        readoutY = (TextView)findViewById(R.id.readoutTxtY);
-        readoutZ = (TextView)findViewById(R.id.readoutTxtZ);
-
-
-        //   mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        //   mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-        /*
-        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION);
-
-        mTriggerEventListener = new TriggerEventListener() {
-            @Override
-            public void onTrigger(TriggerEvent event) {
-                // Do work
-            }
-        };
-
-        mSensorManager.requestTriggerSensor(mTriggerEventListener, mSensor);
-        */
-
-        ToggleButton toggle = (ToggleButton)findViewById(R.id.toggleButton);
-        toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    // The toggle is enabled
-                    startEvents();
-                    readoutX.setText("ON");
-                    readoutY.setText("ON");
-                    readoutZ.setText("ON");
-                } else {
-                    // The toggle is disabled
-                    stopEvents();
-                    sensorsEnabled = false;
-                    readoutX.setText("OFF");
-                    readoutY.setText("OFF");
-                    readoutZ.setText("OFF");
-                }
-            }
-        });
+        initControls();
 
         initSensors();
 
-
-
-        //mSeries1 = new LineGraphSeries<>(generateData());
-        mSeriesX = new LineGraphSeries<>();
-        mSeriesY = new LineGraphSeries<>();
-        mSeriesZ = new LineGraphSeries<>();
-        gv = (GraphView) findViewById(R.id.graph);
-        gv.addSeries(mSeriesX);
-        gv.addSeries(mSeriesY);
-        gv.addSeries(mSeriesZ);
-        gv.getViewport().setXAxisBoundsManual(true);
-        gv.getViewport().setMinX(0);
-        gv.getViewport().setMaxX(20);
-        gv.getViewport().setYAxisBoundsManual(true);
-        gv.getViewport().setMaxY(0.5);
-        gv.getViewport().setMinY(-0.5);
+        initGraph();
     }
 
     public void onResume() {
         super.onResume();
         if (sensorsEnabled) {
             startEvents();
-            //registerListeners();
-            //enableGraph();
         }
     }
 
@@ -127,8 +72,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onPause() {
         super.onPause();
         stopEvents();
-        //unregisterListeners();
-        //disableGraph();
     }
 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -173,6 +116,62 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    private void initControls() {
+        readoutX = (TextView)findViewById(R.id.readoutTxtX);
+        readoutY = (TextView)findViewById(R.id.readoutTxtY);
+        readoutZ = (TextView)findViewById(R.id.readoutTxtZ);
+
+        ToggleButton toggleLogging = (ToggleButton)findViewById(R.id.toggleLogging);
+        toggleLogging.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    startLogging();
+                } else {
+                    stopLogging();
+                }
+            }
+        });
+
+        ToggleButton toggleSensors = (ToggleButton)findViewById(R.id.toggleSensors);
+        toggleSensors.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // The toggleSensors is enabled
+                    startEvents();
+                } else {
+                    // The toggleSensors is disabled
+                    stopEvents();
+                    sensorsEnabled = false;
+                    readoutX.setText("ACCEL_X OFF");
+                    readoutY.setText("ACCEL_Y OFF");
+                    readoutZ.setText("ACCEL_Z OFF");
+                }
+            }
+        });
+    }
+
+    private void initGraph() {
+        //mSeries1 = new LineGraphSeries<>(generateData());
+
+        // accelerometer
+        mSeriesX = new LineGraphSeries<>();
+        mSeriesX.setColor(Color.RED);
+        mSeriesY = new LineGraphSeries<>();
+        mSeriesY.setColor(Color.GREEN);
+        mSeriesZ = new LineGraphSeries<>();
+        mSeriesZ.setColor(Color.BLUE);
+        gv = (GraphView) findViewById(R.id.graph);
+        gv.addSeries(mSeriesX);
+        gv.addSeries(mSeriesY);
+        gv.addSeries(mSeriesZ);
+        gv.getViewport().setXAxisBoundsManual(true);
+        gv.getViewport().setMinX(0);
+        gv.getViewport().setMaxX(20);
+        gv.getViewport().setYAxisBoundsManual(true);
+        gv.getViewport().setMaxY(0.5);
+        gv.getViewport().setMinY(-0.5);
+    }
+
     // Register all needed sensor listeners
     private void registerListeners() {
         if (!sensorsListening) {
@@ -181,7 +180,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //sensorManager.registerListener(this, magneticSensor, SensorManager.SENSOR_DELAY_GAME);
             sensorsListening = true;
         }
-        //Toast.makeText(this, "registerListeners = " + sensorsListening, Toast.LENGTH_SHORT).show();
     }
 
     // Unregister any listeners that are currently in use
@@ -190,7 +188,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             sensorManager.unregisterListener(this);
             sensorsListening = false;
         }
-        //Toast.makeText(this, "unregisterListeners = " + sensorsListening, Toast.LENGTH_SHORT).show();
     }
 
     public void startEvents() {
@@ -205,12 +202,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         disableGraph();
     }
 
+    private void startLogging() {
+        TextView tv = (TextView)findViewById(R.id.loggingStatus);
+        logging = true;
+        tv.setText("LOGGING ON");
+    }
+
+    private void stopLogging() {
+        TextView tv = (TextView)findViewById(R.id.loggingStatus);
+        logging = false;
+        tv.setText("LOGGING OFF");
+    }
     /////////////////////////////////////////////////////////////////////////////////////////
     // this graph code based on http://www.android-graphview.org/realtime-chart/
 
     private final Handler mHandler = new Handler();
     private Runnable mTimer1;
-    //private LineGraphSeries<DataPoint> mSeriesX;
     private LineGraphSeries<DataPoint> mSeriesX, mSeriesY, mSeriesZ;
     //private Runnable mTimer2;
     //private LineGraphSeries<> mSeries2;
@@ -241,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void disableGraph() {
         mHandler.removeCallbacks(mTimer1);
-        mTimer1 = null;
+        mTimer1 = null;  // hard stop
     }
 
     private void enableGraph() {
@@ -259,7 +266,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mHandler.postDelayed(this, 200);
             }
         };
-        mHandler.postDelayed(mTimer1, 300);
+        mHandler.postDelayed(mTimer1, 200);
     }
 
 }

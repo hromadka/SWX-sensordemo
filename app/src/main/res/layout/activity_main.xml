@@ -14,8 +14,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintHorizontal_bias="0.500" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/readoutTxtY"
@@ -26,8 +25,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.570"
-        app:layout_constraintHorizontal_bias="0.500" />
+        app:layout_constraintVertical_bias="0.57" />
 
     <TextView
         android:id="@+id/readoutTxtZ"
@@ -38,23 +36,45 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.645"
-        app:layout_constraintHorizontal_bias="0.500"/>
+        app:layout_constraintVertical_bias="0.645" />
+
+    <TextView
+        android:id="@+id/loggingStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="LOGGING OFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.72" />
+
 
 
     <ToggleButton
-        android:id="@+id/toggleButton"
+        android:id="@+id/toggleSensors"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ToggleButton"
-        tools:layout_editor_absoluteX="2dp"
-        tools:layout_editor_absoluteY="4dp" />
+        android:text="SENSORS"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="16dp" />
+
+    <ToggleButton
+        android:id="@+id/toggleLogging"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="LOG"
+        tools:layout_editor_absoluteY="687dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintHorizontal_bias="0.613" />
 
     <com.jjoe64.graphview.GraphView
         android:layout_width="0dp"
         android:layout_height="200dp"
         android:id="@+id/graph"
-        tools:layout_editor_absoluteY="16dp"
-        tools:layout_editor_absoluteX="0dp" />
+        tools:layout_editor_absoluteY="48dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

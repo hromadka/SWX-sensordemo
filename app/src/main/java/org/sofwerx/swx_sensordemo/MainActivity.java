@@ -128,6 +128,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    /////////////////////////////////////////////////////////////////////////////////
+    // LPF based on https://github.com/raweng/augmented-reality-view
+    //
+    // example usage:
+    // onSensorChanged(SensorEvent evt) { accelVals = lowPass(evt.values.clone(), accelVals); }
+    //
+    static final float ALPHA = 0.25f;
+    protected float[] lowPass( float[] input, float[] output ) {
+        if ( output == null ) return input;
+
+        for ( int i=0; i<input.length; i++ ) {
+            output[i] = output[i] + ALPHA * (input[i] - output[i]);
+        }
+        return output;
+    }
+
+
 
     public void initSensors() {
         // initialize all sensors and the sensor manager

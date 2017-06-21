@@ -44,8 +44,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float[] magneticForce = new float[3];
     private float[] linear_acceleration = new float[3];
 
-    // flags to indicate when the device should have sensors enabled
-    // and if they are currently listening for events
     private boolean sensorsEnabled = false;
     private boolean sensorsListening = false;
 
@@ -139,6 +137,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         for ( int i=0; i<input.length; i++ ) {
             output[i] = output[i] + ALPHA * (input[i] - output[i]);
+        }
+        return output;
+    }
+
+    protected float[] highPass(float[] input, float[] output) {
+        if (output == null) return input;
+
+        for (int i=0; i<input.length; i++) {
+            output[i] = output[i] + (1f/ALPHA) * (input[i] - output[i]);
         }
         return output;
     }

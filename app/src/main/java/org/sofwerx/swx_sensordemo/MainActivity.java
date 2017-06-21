@@ -1,5 +1,6 @@
 package org.sofwerx.swx_sensordemo;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -10,18 +11,27 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    TextView readoutX, readoutY, readoutZ;
-    GraphView gv;
+    private static Context context;
+
+    private TextView readoutX, readoutY, readoutZ, tv;
+    private GraphView gv;
+
+    public File logfile;
+    public FileHelper fileHelper;
 
     // Sensors and Manager variables
     private SensorManager sensorManager;
@@ -40,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean sensorsEnabled = false;
     private boolean sensorsListening = false;
 
+    private long tick = 0;
     private boolean logging = false;
 
     private static final float RAD_TO_DEGREES = (float) (180.0f / Math.PI);
@@ -51,10 +62,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initControls();
+        context = getApplicationContext();
+        fileHelper = new FileHelper(context);
 
+        initUIControls();
         initSensors();
-
         initGraph();
     }
 
@@ -75,15 +87,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        //
     }
 
     public void onSensorChanged(SensorEvent event){
+        // may need to move this off the UI thread
+
         // In this example, alpha is calculated as t / (t + dT),
         // where t is the low-pass filter's time-constant and
         // dT is the event delivery rate.
 
         final float alpha = 0.8f;
-
+        tick++;
 
         // Isolate the force of gravity with the low-pass filter.
         gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
@@ -102,6 +117,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         readoutY.setText( f.toString() );
         f = linear_acceleration[2];
         readoutZ.setText( f.toString() );
+
+        if (logging) {
+            logData(String.valueOf(tick)
+                    + "," + String.valueOf(linear_acceleration[0])
+                    + "," + String.valueOf(linear_acceleration[1])
+                    + "," + String.valueOf(linear_acceleration[2])
+                    + System.lineSeparator());
+            tv.setText("LOGGED " + String.valueOf(tick));
+        }
     }
 
 
@@ -116,21 +140,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    private void initControls() {
+    private void initUIControls() {
         readoutX = (TextView)findViewById(R.id.readoutTxtX);
         readoutY = (TextView)findViewById(R.id.readoutTxtY);
         readoutZ = (TextView)findViewById(R.id.readoutTxtZ);
 
+        tv = (TextView)findViewById(R.id.loggingStatus);
+
         ToggleButton toggleLogging = (ToggleButton)findViewById(R.id.toggleLogging);
-        toggleLogging.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    startLogging();
-                } else {
-                    stopLogging();
+        if (fileHelper.isExternalStorageWritable()) {
+            toggleLogging.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        startLogging();
+                    } else {
+                        stopLogging();
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            tv.setText("LOG: NO SDCARD?");
+            toggleLogging.setEnabled(false);
+        }
 
         ToggleButton toggleSensors = (ToggleButton)findViewById(R.id.toggleSensors);
         toggleSensors.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -160,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSeriesY.setColor(Color.GREEN);
         mSeriesZ = new LineGraphSeries<>();
         mSeriesZ.setColor(Color.BLUE);
+
         gv = (GraphView) findViewById(R.id.graph);
         gv.addSeries(mSeriesX);
         gv.addSeries(mSeriesY);
@@ -203,16 +235,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void startLogging() {
-        TextView tv = (TextView)findViewById(R.id.loggingStatus);
+        logfile = fileHelper.openPublicFile("log" + getTimestamp() + ".csv");
+        fileHelper.writeToFile(logfile, getTimestamp());
+        tick = 0;
         logging = true;
         tv.setText("LOGGING ON");
     }
 
     private void stopLogging() {
-        TextView tv = (TextView)findViewById(R.id.loggingStatus);
         logging = false;
         tv.setText("LOGGING OFF");
     }
+
+    private String getTimestamp() {
+        return new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+    }
+
+    public void logData(final String fileContents) {
+        fileHelper.writeToFile(logfile, fileContents);
+    }
+
+
+
     /////////////////////////////////////////////////////////////////////////////////////////
     // this graph code based on http://www.android-graphview.org/realtime-chart/
 
@@ -255,10 +299,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mTimer1 = new Runnable() {
             @Override
             public void run() {
-                //mSeriesX.resetData(generateData());
-
                 graph2LastXValue += 1d;
-                //mSeriesX.appendData(new DataPoint(graph2LastXValue, getRandom()), true, 20);
                 mSeriesX.appendData(new DataPoint(graph2LastXValue, linear_acceleration[0]), true, 20);
                 mSeriesY.appendData(new DataPoint(graph2LastXValue, linear_acceleration[1]), true, 20);
                 mSeriesZ.appendData(new DataPoint(graph2LastXValue, linear_acceleration[2]), true, 20);

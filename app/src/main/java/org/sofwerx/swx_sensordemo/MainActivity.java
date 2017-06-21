@@ -11,7 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.CompoundButton;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.jjoe64.graphview.GraphView;
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onResume() {
         super.onResume();
         if (sensorsEnabled) {
-            startEvents();
+            startSensorEvents();
         }
     }
 
@@ -83,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     public void onPause() {
         super.onPause();
-        stopEvents();
+        stopSensorEvents();
     }
 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -185,10 +184,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     // The toggleSensors is enabled
-                    startEvents();
+                    startSensorEvents();
                 } else {
                     // The toggleSensors is disabled
-                    stopEvents();
+                    stopSensorEvents();
                     sensorsEnabled = false;
                     readoutX.setText("ACCEL_X OFF");
                     readoutY.setText("ACCEL_Y OFF");
@@ -199,8 +198,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void initGraph() {
-        //mSeries1 = new LineGraphSeries<>(generateData());
-
         // accelerometer
         mSeriesX = new LineGraphSeries<>();
         mSeriesX.setColor(Color.RED);
@@ -239,13 +236,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    public void startEvents() {
+    public void startSensorEvents() {
         sensorsEnabled = true;
         registerListeners();
         enableGraph();
     }
 
-    public void stopEvents() {
+    public void stopSensorEvents() {
         sensorsEnabled = false;
         unregisterListeners();
         disableGraph();
@@ -276,7 +273,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     /////////////////////////////////////////////////////////////////////////////////////////
     // this graph code based on http://www.android-graphview.org/realtime-chart/
-
+    //
     private final Handler mHandler = new Handler();
     private Runnable mTimer1;
     private LineGraphSeries<DataPoint> mSeriesX, mSeriesY, mSeriesZ;
@@ -285,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private double graph2LastXValue = 5d;
     // in hindsight, this var is poorly named.  The X refers to the X-axis of the graph,
-    // not the X-axis of the accelerometer
+    // not the X-axis of the accelerometer.
 
     double mLastRandom = 2;
     Random mRand = new Random();

@@ -97,32 +97,49 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         final float alpha = 0.8f;
         tick++;
 
-        // Isolate the force of gravity with the low-pass filter.
-        gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
-        gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
-        gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
+        switch(event.sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
+                // Isolate the force of gravity with the low-pass filter.
+                gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
+                gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
+                gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
 
-        // Remove the gravity contribution with the high-pass filter.
-        linear_acceleration[0] = event.values[0] - gravity[0];
-        linear_acceleration[1] = event.values[1] - gravity[1];
-        linear_acceleration[2] = event.values[2] - gravity[2];
+                // Remove the gravity contribution with the high-pass filter.
+                linear_acceleration[0] = event.values[0] - gravity[0];
+                linear_acceleration[1] = event.values[1] - gravity[1];
+                linear_acceleration[2] = event.values[2] - gravity[2];
 
 
-        Float f = linear_acceleration[0];
-        readoutX.setText( f.toString() );
-        f = linear_acceleration[1];
-        readoutY.setText( f.toString() );
-        f = linear_acceleration[2];
-        readoutZ.setText( f.toString() );
+                Float f = linear_acceleration[0];
+                readoutX.setText(f.toString());
+                f = linear_acceleration[1];
+                readoutY.setText(f.toString());
+                f = linear_acceleration[2];
+                readoutZ.setText(f.toString());
+
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                // Isolate the force of gravity with the low-pass filter.
+                magneticForce[0] = alpha * magneticForce[0] + (1 - alpha) * event.values[0];
+                magneticForce[1] = alpha * magneticForce[1] + (1 - alpha) * event.values[1];
+                magneticForce[2] = alpha * magneticForce[2] + (1 - alpha) * event.values[2];
+
+                break;
+        }
 
         if (logging) {
             logData(String.valueOf(tick)
                     + "," + String.valueOf(linear_acceleration[0])
                     + "," + String.valueOf(linear_acceleration[1])
                     + "," + String.valueOf(linear_acceleration[2])
+                    + "," + String.valueOf(magneticForce[0])
+                    + "," + String.valueOf(magneticForce[1])
+                    + "," + String.valueOf(magneticForce[2])
                     + System.lineSeparator());
             tv.setText("LOGGED " + String.valueOf(tick));
         }
+
+
     }
 
     /////////////////////////////////////////////////////////////////////////////////
@@ -159,7 +176,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
         //gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        //magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) != null) {
+            magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        }
 
     }
 
@@ -213,10 +232,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSeriesZ = new LineGraphSeries<>();
         mSeriesZ.setColor(Color.BLUE);
 
+        mSeriesMag3D = new LineGraphSeries<>();
+        mSeriesMag3D.setColor(Color.BLACK);
+
         gv = (GraphView) findViewById(R.id.graph);
         gv.addSeries(mSeriesX);
         gv.addSeries(mSeriesY);
         gv.addSeries(mSeriesZ);
+        gv.addSeries(mSeriesMag3D);
         gv.getViewport().setXAxisBoundsManual(true);
         gv.getViewport().setMinX(0);
         gv.getViewport().setMaxX(20);
@@ -230,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (!sensorsListening) {
             sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
             //sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
-            //sensorManager.registerListener(this, magneticSensor, SensorManager.SENSOR_DELAY_GAME);
+            sensorManager.registerListener(this, magneticSensor, SensorManager.SENSOR_DELAY_GAME);
             sensorsListening = true;
         }
     }
@@ -283,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //
     private final Handler mHandler = new Handler();
     private Runnable mTimer1;
-    private LineGraphSeries<DataPoint> mSeriesX, mSeriesY, mSeriesZ;
+    private LineGraphSeries<DataPoint> mSeriesX, mSeriesY, mSeriesZ, mSeriesMag3D;
     //private Runnable mTimer2;
     //private LineGraphSeries<> mSeries2;
 
@@ -324,6 +347,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mSeriesX.appendData(new DataPoint(graph2LastXValue, linear_acceleration[0]), true, 20);
                 mSeriesY.appendData(new DataPoint(graph2LastXValue, linear_acceleration[1]), true, 20);
                 mSeriesZ.appendData(new DataPoint(graph2LastXValue, linear_acceleration[2]), true, 20);
+
+                Float f = (magneticForce[0]*magneticForce[0] +
+                        magneticForce[1]*magneticForce[1] +
+                        magneticForce[2]*magneticForce[2]);
+                Double d2 = (double) f;
+                Double d = Math.sqrt(d2);
+                mSeriesMag3D.appendData(new DataPoint(graph2LastXValue, d), true, 20);
 
                 mHandler.postDelayed(this, 200);
             }

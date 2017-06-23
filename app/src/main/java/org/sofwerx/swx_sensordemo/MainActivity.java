@@ -117,6 +117,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 f = linear_acceleration[2];
                 readoutZ.setText(f.toString());
 
+                Float accelMax = Math.max( Math.max(linear_acceleration[0],
+                        linear_acceleration[1]), linear_acceleration[2] );
+                if (accelMax > THRESHOLD) {
+                    triggerCamera();
+                }
+
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 // Isolate the force of gravity with the low-pass filter.
@@ -300,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void triggerCamera() {
-        
+
     }
 
 

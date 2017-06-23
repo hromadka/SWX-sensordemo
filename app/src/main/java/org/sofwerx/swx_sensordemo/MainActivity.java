@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //private TriggerEventListener mTriggerEventListener;
 
     private float[] gravity = new float[3];
-    private float[] magneticForce = new float[3];
     private float[] linear_acceleration = new float[3];
+    private float[] magneticForce = new float[3];
 
     private boolean sensorsEnabled = false;
     private boolean sensorsListening = false;
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private static final float RAD_TO_DEGREES = (float) (180.0f / Math.PI);
 
-
+    private static final float THRESHOLD = 0.4f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -299,6 +299,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         fileHelper.writeToFile(logfile, fileContents);
     }
 
+    public void triggerCamera() {
+        
+    }
 
 
     /////////////////////////////////////////////////////////////////////////////////////////

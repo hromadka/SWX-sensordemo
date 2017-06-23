@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,8 +16,10 @@ import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.jjoe64.graphview.GraphView;
@@ -60,7 +63,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private static final float RAD_TO_DEGREES = (float) (180.0f / Math.PI);
 
-    private static final float THRESHOLD = 0.4f;
+    private static final float THRESHOLD = 5f;
+
+    private File imageFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -306,60 +311,66 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private String getTimestamp() {
-        return new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        return new SimpleDateFormat("yyyyMMdd-HHmmss").format(Calendar.getInstance().getTime());
     }
 
     public void logData(final String fileContents) {
         fileHelper.writeToFile(logfile, fileContents);
     }
 
+
+    private static final int CAMERA_REQUEST = 1888;
     public void triggerCamera() {
-        dispatchTakePictureIntent();
-    }
+        try {
+            imageFile = createImageFile();
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            cameraIntent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }    }
 
     /////////////////////////////////////////////////////////////////////////////////////////
     // stock code from https://developer.android.com/training/camera/photobasics.html
-    static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int REQUEST_TAKE_PHOTO = 1;
-    private void dispatchTakePictureIntent() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Ensure that there's a camera activity to handle the intent
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Create the File where the photo should go
-            File photoFile = null;
-            try {
-                photoFile = createImageFile();
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-                return;
-            }
-            // Continue only if the File was successfully created
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
-                        photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-            }
-        }
-    }
-
-    String mCurrentPhotoPath;
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
 
-        // Save a file: path for use with ACTION_VIEW intents
-        mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
+
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("message/rfc822");
+            i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"ted.hromadka@sofwerx.org"});
+            i.putExtra(Intent.EXTRA_SUBJECT, "sensordemo pic");
+            i.putExtra(Intent.EXTRA_TEXT   , "app test");
+
+            Uri uri = Uri.fromFile(imageFile);
+            i.putExtra(Intent.EXTRA_STREAM, uri);
+            try {
+                startActivity(Intent.createChooser(i, "Send mail..."));
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+            }
+        }
+        startSensorEvents();
+
+    }
+
 
 
     /////////////////////////////////////////////////////////////////////////////////////////

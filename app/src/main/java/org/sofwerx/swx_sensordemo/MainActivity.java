@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private static final float RAD_TO_DEGREES = (float) (180.0f / Math.PI);
 
-    private static final float THRESHOLD = 5f;
+    private static final float THRESHOLD = 0.5f;
 
     private File imageFile;
 

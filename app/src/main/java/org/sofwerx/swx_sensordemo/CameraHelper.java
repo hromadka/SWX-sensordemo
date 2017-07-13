@@ -7,6 +7,8 @@ package org.sofwerx.swx_sensordemo;
 
 public class CameraHelper {
 
+// see http://www.vogella.com/tutorials/AndroidCamera/article.html
+    // want photo taken without user interaction...
 
 
 }

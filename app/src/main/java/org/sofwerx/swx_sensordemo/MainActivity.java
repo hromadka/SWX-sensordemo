@@ -63,7 +63,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private static final float RAD_TO_DEGREES = (float) (180.0f / Math.PI);
 
-    private static final float THRESHOLD = 0.5f;
+    // note that the gravity sensor will initially measure g, so around 9.81 m/s2.
+    // therefore need to introduce a delay before trigger is enabled
+    private static final float THRESHOLD = 0.2f;
+    private boolean _bTRIGGER_ENABLED = false;
+    private Handler triggerHandler;
 
     private File imageFile;
 
@@ -74,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         context = getApplicationContext();
         fileHelper = new FileHelper(context);
+
+        triggerHandler = new Handler();
 
         initUIControls();
         initSensors();
@@ -98,6 +104,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         //
+    }
+
+    private void enableTrigger() {
+        _bTRIGGER_ENABLED = true;
+        Toast.makeText(this, "CAMERA TRIGGER ENABLED", Toast.LENGTH_SHORT).show();
+    }
+    private void disableTrigger() {
+        _bTRIGGER_ENABLED = false;
     }
 
     public void onSensorChanged(SensorEvent event){
@@ -130,10 +144,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 f = linear_acceleration[2];
                 readoutZ.setText(f.toString());
 
-                Float accelMax = Math.max( Math.max(linear_acceleration[0],
-                        linear_acceleration[1]), linear_acceleration[2] );
-                if (accelMax > THRESHOLD) {
-                    triggerCamera();
+                if (_bTRIGGER_ENABLED) {
+                    Float accelMax = Math.max(Math.max(linear_acceleration[0],
+                            linear_acceleration[1]), linear_acceleration[2]);
+                    if (accelMax > THRESHOLD) {
+                        triggerCamera();
+                    }
                 }
 
                 break;
@@ -289,9 +305,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorsEnabled = true;
         registerListeners();
         enableGraph();
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                enableTrigger();
+            }
+        };
+        triggerHandler.postDelayed(runnable, 5000);
     }
 
+
     public void stopSensorEvents() {
+        disableTrigger();
         sensorsEnabled = false;
         unregisterListeners();
         disableGraph();

@@ -2,9 +2,7 @@ package org.sofwerx.swx_sensordemo;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -12,11 +10,11 @@ import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
-import android.provider.MediaStore;
-import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,6 +37,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private TextView readoutX, readoutY, readoutZ, tv;
     private GraphView gv;
+
+    private Toolbar toolbar;
 
     public File logfile;
     public FileHelper fileHelper;
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     // note that the gravity sensor will initially measure g, so around 9.81 m/s2.
     // therefore need to introduce a delay before trigger is enabled
-    private static final float THRESHOLD = 0.2f;
+    private static final float THRESHOLD = 0.1f;
     private boolean _bTRIGGER_ENABLED = false;
     private Handler triggerHandler;
 
@@ -147,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 if (_bTRIGGER_ENABLED) {
                     Float accelMax = Math.max(Math.max(linear_acceleration[0],
                             linear_acceleration[1]), linear_acceleration[2]);
+                    // simple naive threshold "detection"
                     if (accelMax > THRESHOLD) {
                         triggerCamera();
                     }
@@ -202,7 +203,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return output;
     }
 
+    // Menu icons are inflated just as they were with actionbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                // User chose the "Settings" item, show the app settings UI...
+                Toast.makeText(this, "SETTINGS CLICKED", Toast.LENGTH_SHORT).show();
+                return true;
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
+    }
 
     public void initSensors() {
         // initialize all sensors and the sensor manager
@@ -218,6 +241,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void initUIControls() {
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+
         readoutX = (TextView)findViewById(R.id.readoutTxtX);
         readoutY = (TextView)findViewById(R.id.readoutTxtY);
         readoutZ = (TextView)findViewById(R.id.readoutTxtZ);

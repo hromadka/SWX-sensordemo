@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     tools:context="org.sofwerx.swx_sensordemo.MainActivity">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_gravity="left"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
     <TextView
         android:id="@+id/readoutTxtX"
         android:layout_width="wrap_content"
@@ -55,14 +65,12 @@
         app:layout_constraintTop_toBottomOf="@+id/readoutTxtZ"
         app:layout_constraintVertical_bias="0.05" />
 
-
-
     <ToggleButton
         android:id="@+id/toggleSensors"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="SENSORS"
-        tools:layout_editor_absoluteY="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
         tools:layout_editor_absoluteX="16dp" />
 
     <ToggleButton
@@ -70,7 +78,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="LOG"
-        tools:layout_editor_absoluteY="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:layout_constraintLeft_toRightOf="@+id/toggleSensors"
         android:layout_marginLeft="8dp" />
 
